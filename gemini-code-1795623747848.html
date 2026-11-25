@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 視覺與動態作品集 | Showcase</title>
+  <style>
+    :root {
+      --bg-color: #09090b;
+      --card-bg: #121215;
+      --card-border: #27272a;
+      --card-hover: #3f3f46;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+      line-height: 1.6;
+      padding-bottom: 80px;
+    }
+
+    /* 頂部 Hero 區塊 */
+    header {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 64px 24px 40px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      background-clip: text; /* <-- 補上這行 */
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    /* 搜尋與分類控制列 */
+    .controls {
+      max-width: 1280px;
+      margin: 0 auto 32px;
+      padding: 0 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .cat-btn {
+      background: var(--card-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cat-btn:hover {
+      border-color: var(--card-hover);
+      color: var(--text-main);
+    }
+
+    .cat-btn.active {
+      background: var(--text-main);
+      color: var(--bg-color);
+      border-color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .search-box {
+      position: relative;
+      min-width: 260px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--accent);
+    }
+
+    /* 作品網格 Grid */
+    .grid {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: var(--card-hover);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .media-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .media-wrap video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .badge-id {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      font-family: monospace;
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .play-hint {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(6px);
+      color: #e4e4e7;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover .play-hint {
+      opacity: 0;
+    }
+
+    .card-body {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .card-cat {
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* 彈窗 Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      max-width: 1000px;
+      width: 100%;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      max-height: 90vh;
+    }
+
+    @media (max-width: 820px) {
+      .modal-box {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+      }
+    }
+
+    .modal-video-area {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-video-area video {
+      width: 100%;
+      height: 100%;
+      max-height: 75vh;
+      object-fit: contain;
+    }
+
+    .modal-info {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .close-btn {
+      background: #27272a;
+      border: none;
+      color: #fff;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .close-btn:hover {
+      background: #3f3f46;
+    }
+
+    .prompt-section {
+      margin-top: 20px;
+    }
+
+    .prompt-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: block;
+      font-weight: 600;
+    }
+
+    .prompt-box {
+      background: #09090b;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.85rem;
+      color: #d4d4d8;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-bottom: 14px;
+    }
+
+    .copy-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .copy-btn.copied {
+      background: #10b981;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>AI 動態視覺圖鑑</h1>
+    <p>探索由程式碼與 AI 驅動的動態視覺風格實驗，點擊任意卡片預覽完整動畫並複製專屬指令。</p>
+  </header>
+
+  <div class="controls">
+    <div class="categories" id="categoryContainer">
+      <button class="cat-btn active" data-cat="ALL">全部作品</button>
+    </div>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="搜尋標題、風格或關鍵字..." />
+    </div>
+  </div>
+
+  <main class="grid" id="galleryGrid"></main>
+
+  <!-- 燈箱 Modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-video-area">
+        <video id="modalVideo" controls playsinline loop></video>
+      </div>
+      <div class="modal-info">
+        <div>
+          <div class="modal-header">
+            <div>
+              <span class="card-cat" id="modalCat">分類</span>
+              <h2 id="modalTitle" style="margin-top: 4px; font-size: 1.4rem;">作品標題</h2>
+            </div>
+            <button class="close-btn" id="closeModalBtn" title="關閉">✕</button>
+          </div>
+          <p id="modalDesc" style="color: var(--text-muted); font-size: 0.95rem;"></p>
+        </div>
+
+        <div class="prompt-section">
+          <span class="prompt-label">PROMPT / 風格指令</span>
+          <div class="prompt-box" id="modalPrompt"></div>
+          <button class="copy-btn" id="copyPromptBtn">複製 Prompt 指令</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allWorks = [];
+    let currentCategory = "ALL";
+    let currentKeyword = "";
+
+    const galleryGrid = document.getElementById("galleryGrid");
+    const categoryContainer = document.getElementById("categoryContainer");
+    const searchInput = document.getElementById("searchInput");
+
+    // Modal 元素
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalVideo = document.getElementById("modalVideo");
+    const modalCat = document.getElementById("modalCat");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalDesc = document.getElementById("modalDesc");
+    const modalPrompt = document.getElementById("modalPrompt");
+    const copyPromptBtn = document.getElementById("copyPromptBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
+    // 1. 讀取 data.json
+    async function init() {
+      try {
+        const res = await fetch("./data.json");
+        allWorks = await res.json();
+        renderCategories();
+        renderCards();
+        checkUrlParam();
+      } catch (err) {
+        galleryGrid.innerHTML = `<div class="empty-state">無法讀取 data.json，請確認是否透過本機伺服器或 GitHub Pages 開啟網頁。</div>`;
+        console.error(err);
+      }
+    }
+
+    // 2. 自動產生分類按鈕
+    function renderCategories() {
+      const cats = [...new Set(allWorks.map(item => item.category))];
+      cats.forEach(cat => {
+        const btn = document.createElement("button");
+        btn.className = "cat-btn";
+        btn.textContent = cat;
+        btn.dataset.cat = cat;
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentCategory = cat;
+          renderCards();
+        });
+        categoryContainer.appendChild(btn);
+      });
+
+      // 綁定「全部作品」按鈕
+      categoryContainer.querySelector('[data-cat="ALL"]').addEventListener("click", (e) => {
+        document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+        e.target.classList.add("active");
+        currentCategory = "ALL";
+        renderCards();
+      });
+    }
+
+    // 3. 渲染作品卡片
+    function renderCards() {
+      const filtered = allWorks.filter(item => {
+        const matchCat = currentCategory === "ALL" || item.category === currentCategory;
+        const kw = currentKeyword.toLowerCase();
+        const matchKw =
+          item.title.toLowerCase().includes(kw) ||
+          item.description.toLowerCase().includes(kw) ||
+          item.prompt.toLowerCase().includes(kw) ||
+          item.id.toLowerCase().includes(kw);
+        return matchCat && matchKw;
+      });
+
+      if (filtered.length === 0) {
+        galleryGrid.innerHTML = `<div class="empty-state">找不到符合條件的作品 😢</div>`;
+        return;
+      }
+
+      galleryGrid.innerHTML = filtered.map(item => `
+        <article class="card" data-id="${item.id}">
+          <div class="media-wrap">
+            <span class="badge-id">#${item.id}</span>
+            <video 
+              src="${item.video}" 
+              poster="${item.poster || ""}" 
+              muted 
+              loop 
+              playsinline 
+              preload="metadata">
+            </video>
+            <span class="play-hint">懸停預覽</span>
+          </div>
+          <div class="card-body">
+            <div>
+              <div class="card-meta">
+                <span class="card-cat">${item.category}</span>
+              </div>
+              <h3 class="card-title">${item.title}</h3>
+              <p class="card-desc">${item.description}</p>
+            </div>
+          </div>
+        </article>
+      `).join("");
+
+      // 綁定卡片事件：滑鼠懸停播放、點擊開燈箱
+      document.querySelectorAll(".card").forEach(card => {
+        const video = card.querySelector("video");
+        const id = card.dataset.id;
+
+        card.addEventListener("mouseenter", () => {
+          video.play().catch(() => {});
+        });
+
+        card.addEventListener("mouseleave", () => {
+          video.pause();
+          video.currentTime = 0;
+        });
+
+        card.addEventListener("click", () => {
+          const work = allWorks.find(w => w.id === id);
+          if (work) openModal(work);
+        });
+      });
+    }
+
+    // 4. 搜尋監聽
+    searchInput.addEventListener("input", (e) => {
+      currentKeyword = e.target.value.trim();
+      renderCards();
+    });
+
+    // 5. 開啟燈箱 Modal
+    function openModal(work) {
+      modalCat.textContent = `#${work.id} · ${work.category}`;
+      modalTitle.textContent = work.title;
+      modalDesc.textContent = work.description;
+      modalPrompt.textContent = work.prompt;
+      modalVideo.src = work.video;
+      modalVideo.poster = work.poster || "";
+
+      copyPromptBtn.textContent = "複製 Prompt 指令";
+      copyPromptBtn.classList.remove("copied");
+
+      modalBackdrop.classList.add("open");
+      modalVideo.play().catch(() => {});
+
+      // 更新網址參數方便分享
+      const url = new URL(window.location);
+      url.searchParams.set("id", work.id);
+      window.history.replaceState({}, "", url);
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove("open");
+      modalVideo.pause();
+      modalVideo.src = "";
+
+      const url = new URL(window.location);
+      url.searchParams.delete("id");
+      window.history.replaceState({}, "", url);
+    }
+
+    closeModalBtn.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", closeModal);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalBackdrop.classList.contains("open")) {
+        closeModal();
+      }
+    });
+
+    // 6. 一鍵複製 Prompt
+    copyPromptBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(modalPrompt.textContent);
+        copyPromptBtn.textContent = "✓ 已複製到剪貼簿！";
+        copyPromptBtn.classList.add("copied");
+        setTimeout(() => {
+          copyPromptBtn.textContent = "複製 Prompt 指令";
+          copyPromptBtn.classList.remove("copied");
+        }, 2000);
+      } catch (err) {
+        alert("複製失敗，請手動選取複製");
+      }
+    });
+
+    // 7. 支援直接透過 ?id=01 網址開啟指定作品
+    function checkUrlParam() {
+      const params = new URLSearchParams(window.location.search);
+      const targetId = params.get("id");
+      if (targetId) {
+        const found = allWorks.find(w => w.id === targetId);
+        if (found) openModal(found);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
